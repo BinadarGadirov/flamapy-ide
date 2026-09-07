@@ -6,6 +6,7 @@ const DropdownMenu = ({
   buttonLabel,
   executeAction,
   className = "w-full bg-[#356C99] text-white py-2 px-4 rounded shadow-lg flex justify-between items-center",
+  zIndex = 50,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
@@ -79,7 +80,7 @@ const DropdownMenu = ({
   let selectableIdx = -1;
 
   return (
-    <div ref={dropdownRef} className="relative inline-block w-max z-50" onKeyDown={handleKeyDown}>
+    <div ref={dropdownRef} className="relative inline-block w-max" style={{zIndex}} onKeyDown={handleKeyDown}>
       <button
         onClick={handleToggle}
         className={className}
@@ -100,7 +101,8 @@ const DropdownMenu = ({
 
       {isOpen && (
         <div
-          className="fixed bg-white dark:bg-gray-800 border border-black/10 dark:border-white/10 rounded-md shadow-lg z-50 py-1 overflow-hidden"
+          className="fixed bg-white dark:bg-gray-800 border border-black/10 dark:border-white/10 rounded-md shadow-lg py-1 overflow-hidden"
+          style={{ zIndex }}
           style={{
             top: menuStyle?.top ?? 0,
             left: menuStyle?.left ?? 0,

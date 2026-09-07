@@ -376,32 +376,89 @@ def _execute_attribute_optimization_sat(attributes_goals):
 
 def start_configurator():
     global configurator
-    configurator = FmToConfigurator(fm.fm_model).transform()
-    configurator.start()
-    
-    result = configurator.get_current_status()
-    return json.dumps(result)
+    try:
+        configurator = FmToConfigurator(fm.fm_model).transform()
+        configurator.current_question_index = 0
+        configurator.history = []
+        return _get_current_question()
+    except Exception as e:
+        return json.dumps({"error": str(e)})
 
-def answer_question(answer):
-    valid = configurator.answer_question(answer)
-
-    result = dict()
-    result['valid'] = valid
-    if valid:
-        if configurator.next_question():
-            result['nextQuestion'] = configurator.get_current_status()
-        else:
-            result['configuration'] = configurator._get_configuration()
+def _get_current_question():
+    global configurator
+    if configurator.current_question_index >= len(configurator.questions):
+        return json.dumps({"finished": True, "history": configurator.history})
+    q = configurator.questions[configurator.current_question_index]
+    feature = q.feature
+    if feature.is_alternative_group():
+        q_type = "alternative"
+    elif feature.is_or_group():
+        q_type = "or"
     else:
-        result['contradiction'] = {'msg': 'The selected choice is incompatible with the model definition. Please choose another option.'}
-    
-    result['history'] = configurator._get_configuration()
-    return json.dumps(result)
+        q_type = "optional"
+    options = [{"id": i, "name": o.feature.name, "mandatory": o.feature.is_mandatory()} for i, o in enumerate(q.options)]
+    return json.dumps({
+        "currentQuestion": q.name,
+        "currentQuestionAttrs": None,
+        "possibleOptions": options,
+        "currentQuestionType": q_type,
+        "totalQuestions": len(configurator.questions),
+        "history": configurator.history
+    })
+
+def answer_question(selected_answers):
+    global configurator
+    try:
+        q = configurator.questions[configurator.current_question_index]
+        for idx in selected_answers:
+            option = q.options[idx]
+            configurator.set_state(option.feature.name, True)
+            configurator.history.append({"feature": option.feature.name, "selected": True})
+
+        if selected_answers:
+            parent = q.options[selected_answers[0]].feature.get_parent()
+            if parent and parent.name not in [h["feature"] for h in configurator.history]:
+                configurator.history.append({"feature": parent.name, "selected": True})
+        for i, option in enumerate(q.options):
+            if i not in selected_answers:
+                configurator.set_state(option.feature.name, False)
+                if not option.feature.is_mandatory():
+                    configurator.history.append({"feature": option.feature.name, "selected": False})
+        configurator.current_question_index += 1
+        if configurator.current_question_index >= len(configurator.questions):
+            config_result = {}
+            for q2 in configurator.questions:
+                for o in q2.options:
+                    status = str(o.status)
+                    if "DESELECTED" in status:
+                        config_result[o.feature.name] = False
+                    elif "SELECTED" in status:
+                        config_result[o.feature.name] = True
+                    else:
+                        config_result[o.feature.name] = None
+            return json.dumps({
+                "valid": True,
+                "configuration": config_result,
+                "history": configurator.history
+            })
+        return json.dumps({
+            "valid": True,
+            "nextQuestion": json.loads(_get_current_question()),
+            "history": configurator.history
+        })
+    except Exception as e:
+        return json.dumps({"valid": False, "contradiction": {"msg": str(e)}})
 
 def undo_answer():
-    configurator.previous_question()
-
-    result = configurator.get_current_status()
-    result['history'] = configurator._get_configuration()
-
-    return json.dumps(result)
+    global configurator
+    try:
+        if configurator.current_question_index > 0:
+            configurator.current_question_index -= 1
+            q = configurator.questions[configurator.current_question_index]
+            for option in q.options:
+                configurator.set_state(option.feature.name, None)
+            configurator.history = [h for h in configurator.history
+                                     if h["feature"] not in [o.feature.name for o in q.options]]
+        return _get_current_question()
+    except Exception as e:
+        return json.dumps({"error": str(e)})

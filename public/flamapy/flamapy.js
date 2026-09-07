@@ -20,18 +20,21 @@ class Flamapy {
     await pyodideInstance.loadPackage("micropip");
 
     // Load pyodide_packages declared by enabled plugins (e.g. python-sat)
-    const pyodidePackages = [];
-    for (const [, plugin] of Object.entries(this.pluginsConfig.plugins)) {
-      if (plugin.enabled && plugin.pyodide_packages) {
-        pyodidePackages.push(...plugin.pyodide_packages);
-      }
-    }
+    const pyodidePackages = [...(this.pluginsConfig.core.pyodide_packages || [])];
+for (const [, plugin] of Object.entries(this.pluginsConfig.plugins)) {
+  if (plugin.enabled && plugin.pyodide_packages) {
+    pyodidePackages.push(...plugin.pyodide_packages);
+  }
+}
     if (pyodidePackages.length > 0) {
       await pyodideInstance.loadPackage(pyodidePackages);
     }
 
     // Build the micropip install list: core wheels + enabled plugin wheels
-    const allWheels = [...this.pluginsConfig.core.wheels];
+    const allWheels = [
+  ...this.pluginsConfig.core.wheels,
+  ...(this.pluginsConfig.core.extra_wheels || [])
+];
     for (const [, plugin] of Object.entries(this.pluginsConfig.plugins)) {
       if (plugin.enabled) {
         allWheels.push(...plugin.wheels);

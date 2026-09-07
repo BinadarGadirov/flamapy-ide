@@ -800,8 +800,11 @@ function EditorPage({ selectedFile, darkMode, toggleDark }) {
   const editorTabs = useMemo(() => {
     const tabs = [...viewOptions, ...metricsOptions];
     const dynamic = { configurator: "Configurator", paretofront: "Pareto Front" };
-    if (dynamic[currentView] && !tabs.some((t) => t.value === currentView)) {
-      tabs.push({ label: dynamic[currentView], value: currentView });
+    if (!tabs.some((t) => t.value === "configurator")) {
+    tabs.push({ label: "Configurator", value: "configurator" });
+    }
+    if (currentView === "paretofront" && !tabs.some((t) => t.value === "paretofront")) {
+    tabs.push({ label: "Pareto Front", value: "paretofront" });
     }
     return tabs;
   }, [viewOptions, metricsOptions, currentView]);

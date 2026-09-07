@@ -54,3 +54,5 @@ public/flamapy/*.whl
 # artifact: `make build-wheels` generates it from the tracked, version-less
 # plugins.conf.template.json. Only the template is committed.
 public/flamapy/plugins.conf.json
+flamapy-env/
+flamapyenv/
