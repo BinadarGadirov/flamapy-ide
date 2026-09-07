@@ -134,6 +134,7 @@ const TreeView = ({ treeData, executeAction, operations, history }) => {
           options={operations}
           executeAction={(action) => executeAction(action, statusMap)}
           className="w-full inline-flex items-center justify-between gap-1 bg-accent text-white py-1.5 px-3 rounded-md text-[12px] hover:bg-[#1d5cf0] transition-colors"
+          zIndex={20}
         />
 
         {treeData && (

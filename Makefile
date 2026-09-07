@@ -17,7 +17,8 @@ FLAMAPY_CORE_PACKAGES = \
 	flamapy-sat==$(FLAMAPY_VERSION) \
 	flamapy-bdd==$(FLAMAPY_VERSION) \
 	flamapy-z3==$(FLAMAPY_VERSION) \
-	flamapy==$(FLAMAPY_VERSION)
+	flamapy==$(FLAMAPY_VERSION) \
+	flamapy-configurator==2.5.1
 
 # Third-party pure-python deps required by flamapy plugins
 FLAMAPY_DEPS = \
